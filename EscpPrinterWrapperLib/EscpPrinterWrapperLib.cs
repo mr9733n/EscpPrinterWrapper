@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Primitives;
+using EscpPrinterWrapperLib.Enums;
 
 namespace EscpPrinterWrapperLib
 {
     /// <summary>
     /// A wrapper class for ESC/P printer commands for controlling the QL-8XX series printers.
     /// </summary>
+    /// <remarks>
+    /// This class provides methods to generate ESC/P commands for printing text and barcodes.
+    /// </remarks>
+    /// <author>Dima Green</author>
+    /// <version>1.0.0</version>
     public class EscpPrinterWrapper
     {
         private readonly ILogger<EscpPrinterWrapper> _logger;
@@ -38,78 +43,6 @@ namespace EscpPrinterWrapperLib
         private const string SpecifyHorizontalPosition = Esc + "$";
         private const string SpecifyVerticalPosition = Esc + "(V";
         private const string SpecifyAlignment = Esc + "a";
-
-        // Enums for various printer settings
-        public enum BarcodeType
-        {
-            CODE39 = '0',
-            ITF = '1',
-            EAN_8 = '5',
-            EAN_13 = '5',
-            UPC_A = '5',
-            UPC_E = '6',
-            CODABAR = '9',
-            CODE128 = 'a',
-            GS1_128 = 'b',
-            RSS = 'c',
-            CODE93 = 'd',
-            POSTNET = 'e',
-            UPC_E_EXTENSION = 'f',
-            MSI = 'g'
-        }
-
-        public enum Alignment
-        {
-            Left = 0,
-            Center = 1,
-            Right = 2
-        }
-
-        public enum FontType
-        {
-            FontA = '0',
-            FontB = '1'
-        }
-
-        public enum Bold
-        {
-            Off = 'F',
-            On = 'E'
-        }
-
-        public enum Italic
-        {
-            Off = '5',
-            On = '4'
-        }
-
-        public enum Underline
-        {
-            None = '0',
-            Single = '1',
-            Double = '2'
-        }
-
-        public enum Spacing
-        {
-            Normal = '0',
-            Wide = '1'
-        }
-
-        public enum BarcodeWidth
-        {
-            ExtraSmall = '0',
-            Small = '1',
-            Medium = '2',
-            Large = '3'
-        }
-
-        public enum BarcodeRatio
-        {
-            ThreeToOne = '0',
-            TwoPointFiveToOne = '1',
-            TwoToOne = '2'
-        }
 
         /// <summary>
         /// Wraps text with ESC/P commands for the specified styles.
@@ -156,10 +89,10 @@ namespace EscpPrinterWrapperLib
             _logger.LogInformation($"Wrapping barcode: {data}, BarcodeType: {barcodeType}, Height: {height}, Width: {width}, Ratio: {ratio}, PrintCharsBelow: {printCharsBelow}, Alignment: {alignment}");
 
             string setType = $"{Esc}i{(char)barcodeType}";  // Barcode type
-            string setHeight = $"h{height:D2}";  // Height
-            string setWidth = $"w{(char)width}";  // Width
-            string setRatio = $"z{(char)ratio}";  // Ratio
-            string setCharsBelow = printCharsBelow ? "r1" : "r0";  // Characters below barcode
+            string setHeight = $"{Esc}h{height:D2}";  // Height
+            string setWidth = $"{Esc}w{(char)width}";  // Width
+            string setRatio = $"{Esc}z{(char)ratio}";  // Ratio
+            string setCharsBelow = $"{Esc}r{(printCharsBelow ? '1' : '0')}";  // Characters below barcode
             string setAlignment = $"{Esc}a{(int)alignment}";  // Alignment
 
             string command = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{EndOfBarcode}";
@@ -194,10 +127,7 @@ namespace EscpPrinterWrapperLib
             int? horizontalPosition = null,
             int? verticalPosition = null)
         {
-            _logger.LogInformation("Generating full print command with options: " +
-                $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, pageFormatWidth: {pageFormatWidth}, pageFormatHeight: {pageFormatHeight}, " +
-                $"pageLength: {pageLength}, leftMargin: {leftMargin}, rightMargin: {rightMargin}, horizontalPosition: {horizontalPosition}, verticalPosition: {verticalPosition}");
-
+            _logger.LogInformation($"Generating full print command with options: " + $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, pageFormatWidth: {pageFormatWidth}, pageFormatHeight: {pageFormatHeight}, " + $"pageLength: {pageLength}, leftMargin: {leftMargin}, rightMargin: {rightMargin}, horizontalPosition: {horizontalPosition}, verticalPosition: {verticalPosition}");
             var sb = new StringBuilder();
             sb.Append(Init);
 
