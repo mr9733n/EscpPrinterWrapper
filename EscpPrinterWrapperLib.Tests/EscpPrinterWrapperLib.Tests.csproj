@@ -2,6 +2,10 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
+		<Company>9733</Company>
+		<Authors>Dima Green</Authors>
+		<Version>1.0.0</Version>
+		<Description>Unit Tests for ESC/P Printer Wrapper Library</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

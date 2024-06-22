@@ -14,7 +14,7 @@ namespace EscpPrinterWrapperLib
     /// This class provides methods to generate ESC/P commands for printing text and barcodes.
     /// </remarks>
     /// <author>Dima Green</author>
-    /// <version>1.0.0</version>
+    /// <version>1.0.1</version>
     public class EscpPrinterWrapper
     {
         private readonly ILogger<EscpPrinterWrapper> _logger;
@@ -43,6 +43,7 @@ namespace EscpPrinterWrapperLib
         private const string SpecifyHorizontalPosition = Esc + "$";
         private const string SpecifyVerticalPosition = Esc + "(V";
         private const string SpecifyAlignment = Esc + "a";
+        private const string CarriageReturn = "\r";  // CR (0D)
 
         /// <summary>
         /// Wraps text with ESC/P commands for the specified styles.
@@ -56,9 +57,21 @@ namespace EscpPrinterWrapperLib
         /// <param name="alignment">Text alignment.</param>
         /// <param name="spacing">Character spacing.</param>
         /// <returns>The wrapped text command.</returns>
-        public string WrapText(string text, int fontSize, FontType fontType = FontType.FontA, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal)
+        /// <exception cref="ArgumentException">Thrown when the text is null or empty.</exception>
+        /// <example>
+        /// <code>
+        /// var wrapper = new EscpPrinterWrapper(null);
+        /// string command = wrapper.WrapText("Hello World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
+        /// </code>
+        /// </example>
+        public string WrapText(string text, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal)
         {
             _logger.LogInformation($"Wrapping text: {text}, FontSize: {fontSize}, FontType: {fontType}, Bold: {bold}, Italic: {italic}, Underline: {underline}, Alignment: {alignment}, Spacing: {spacing}");
+
+            if (string.IsNullOrEmpty(text))
+            {
+                throw new ArgumentException("Text cannot be null or empty.", nameof(text));
+            }
 
             string setFontSize = $"{Esc}X{fontSize}";  // Set font size (for bitmap fonts min: 24, for outline fonts min: 33)
             string setFontType = $"{Esc}k{(char)fontType}";  // Set font type
@@ -84,6 +97,12 @@ namespace EscpPrinterWrapperLib
         /// <param name="printCharsBelow">Whether to print characters below the barcode.</param>
         /// <param name="alignment">Barcode alignment.</param>
         /// <returns>The wrapped barcode command.</returns>
+        /// <example>
+        /// <code>
+        /// var wrapper = new EscpPrinterWrapper(null);
+        /// string command = wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center);
+        /// </code>
+        /// </example>
         public string WrapBarcode(string data, BarcodeType barcodeType, int height = 100, BarcodeWidth width = BarcodeWidth.Medium, BarcodeRatio ratio = BarcodeRatio.TwoToOne, bool printCharsBelow = true, Alignment alignment = Alignment.Left)
         {
             _logger.LogInformation($"Wrapping barcode: {data}, BarcodeType: {barcodeType}, Height: {height}, Width: {width}, Ratio: {ratio}, PrintCharsBelow: {printCharsBelow}, Alignment: {alignment}");
@@ -92,6 +111,8 @@ namespace EscpPrinterWrapperLib
             string setHeight = $"{Esc}h{height:D2}";  // Height
             string setWidth = $"{Esc}w{(char)width}";  // Width
             string setRatio = $"{Esc}z{(char)ratio}";  // Ratio
+
+
             string setCharsBelow = $"{Esc}r{(printCharsBelow ? '1' : '0')}";  // Characters below barcode
             string setAlignment = $"{Esc}a{(int)alignment}";  // Alignment
 
@@ -115,6 +136,17 @@ namespace EscpPrinterWrapperLib
         /// <param name="horizontalPosition">The horizontal position.</param>
         /// <param name="verticalPosition">The vertical position.</param>
         /// <returns>The full print command.</returns>
+        /// <example>
+        /// <code>
+        /// var wrapper = new EscpPrinterWrapper(null);
+        /// var commands = new List<string>
+        /// {
+        ///     wrapper.WrapText("Test", 24, FontType.FontA, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
+        ///     wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center)
+        /// };
+        /// string printCommand = wrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
+        /// </code>
+        /// </example>
         public string GeneratePrintCommand(
             List<string> wrappedCommands,
             bool cutPaper = false,
@@ -127,7 +159,10 @@ namespace EscpPrinterWrapperLib
             int? horizontalPosition = null,
             int? verticalPosition = null)
         {
-            _logger.LogInformation($"Generating full print command with options: " + $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, pageFormatWidth: {pageFormatWidth}, pageFormatHeight: {pageFormatHeight}, " + $"pageLength: {pageLength}, leftMargin: {leftMargin}, rightMargin: {rightMargin}, horizontalPosition: {horizontalPosition}, verticalPosition: {verticalPosition}");
+            _logger.LogInformation("Generating full print command with options: " +
+                $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, pageFormatWidth: {pageFormatWidth}, pageFormatHeight: {pageFormatHeight}, " +
+                $"pageLength: {pageLength}, leftMargin: {leftMargin}, rightMargin: {rightMargin}, horizontalPosition: {horizontalPosition}, verticalPosition: {verticalPosition}");
+
             var sb = new StringBuilder();
             sb.Append(Init);
 

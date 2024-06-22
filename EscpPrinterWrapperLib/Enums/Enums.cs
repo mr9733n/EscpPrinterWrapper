@@ -36,8 +36,14 @@
     /// </summary>
     public enum FontType
     {
-        FontA = '0',
-        FontB = '1'
+        Brougham = 0,
+        LetterGothicBold = 1,
+        Brussels = 2,
+        Helsinki = 3,
+        SanDiego = 4,
+        LetterGothic = 9,
+        BrusselsOutline = 10,
+        HelsinkiOutline = 11
     }
 
     /// <summary>

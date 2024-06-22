@@ -15,8 +15,8 @@ namespace EscpPrinterWrapperConsole
     /// <remarks>
     /// This class sets up logging and processes command line arguments to generate ESC/P commands for a QL-8XX series printer.
     /// </remarks>
-    /// <author>John Doe</author>
-    /// <version>1.0.0</version>
+    /// <author>Dima Green</author>
+    /// <version>1.0.1</version>
     class Program
     {
         static void Main(string[] args)
@@ -63,7 +63,7 @@ namespace EscpPrinterWrapperConsole
                         {
                             throw new FormatException($"Invalid fontSize: {parameters[1]}");
                         }
-                        FontType fontType = parameters.Length > 2 ? Enum.Parse<FontType>(parameters[2], true) : FontType.FontA;
+                        FontType fontType = parameters.Length > 2 ? Enum.Parse<FontType>(parameters[2], true) : FontType.Helsinki;
                         Bold bold = parameters.Length > 3 && bool.Parse(parameters[3]) ? Bold.On : Bold.Off;
                         Italic italic = parameters.Length > 4 && bool.Parse(parameters[4]) ? Italic.On : Italic.Off;
                         Underline underline = parameters.Length > 5 ? Enum.Parse<Underline>(parameters[5], true) : Underline.None;
