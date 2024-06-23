@@ -271,5 +271,35 @@ namespace EscpPrinterWrapperLib
             }
             return sb.ToString();
         }
+        public byte[] GenerateInitCommand()
+        {
+            return new byte[] { 0x1B, 0x40 }; // ESC @
+        }
+
+        public byte[] GenerateLandscapeModeCommand()
+        {
+            return new byte[] { 0x1B, 0x69, 0x4C, 0x01 }; // ESC i L 01
+        }
+
+        public byte[] GenerateMarginAndLineFeedCommand()
+        {
+            return new byte[] { 0x1B, 0x55, 0x02, 0x1B, 0x33, 0x04 }; // ESC U 02, ESC 3 04
+        }
+
+        public byte[] GenerateFontAndSizeCommand(int fontSize)
+        {
+            return new byte[] { 0x1B, 0x6B, 3, 0x1B, 0x58, 0x00, (byte)fontSize, 0x00 }; // ESC k 3, ESC X 00, fontSize
+        }
+
+        public byte[] GenerateNewLineCommand()
+        {
+            return new byte[] { 0x0A, 0x0A }; // Line feed
+        }
+
+        public byte[] GenerateFormFeedCommand()
+        {
+            return new byte[] { 0x0C }; // Form feed
+        }
+
     }
 }
