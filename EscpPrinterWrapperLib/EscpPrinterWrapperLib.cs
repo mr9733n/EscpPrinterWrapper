@@ -67,17 +67,18 @@ namespace EscpPrinterWrapperLib
         /// <param name="underline">Underline setting.</param>
         /// <param name="alignment">Text alignment.</param>
         /// <param name="spacing">Character spacing.</param>
+        /// <param name="includeCarriageReturn">Flag to include carriage return after text.</param>
         /// <returns>The wrapped text command.</returns>
         /// <exception cref="ArgumentException">Thrown when the text is null or empty.</exception>
         /// <example>
         /// <code>
         /// var wrapper = new EscpPrinterWrapper(null);
-        /// string command = wrapper.WrapText("Hello", "World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
+        /// string command = wrapper.WrapText("Hello", "World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, true);
         /// </code>
         /// </example>
-        public string WrapText(string text1, string text2, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal)
+        public string WrapText(string text1, string text2, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal, bool includeCarriageReturn = false)
         {
-            _logger.LogInformation($"Wrapping text: {text1} {text2}, FontSize: {fontSize}, FontType: {fontType}, Bold: {bold}, Italic: {italic}, Underline: {underline}, Alignment: {alignment}, Spacing: {spacing}");
+            _logger.LogInformation($"Wrapping text: {text1} {text2}, FontSize: {fontSize}, FontType: {fontType}, Bold: {bold}, Italic: {italic}, Underline: {underline}, Alignment: {alignment}, Spacing: {spacing}, CarriageReturn: {includeCarriageReturn}");
 
             if (string.IsNullOrEmpty(text1) || string.IsNullOrEmpty(text2))
             {
@@ -93,7 +94,11 @@ namespace EscpPrinterWrapperLib
             string setAlignment = $"{Esc}a{(int)alignment}";  // Set alignment
             string setSpacing = $"{Esc} {(char)spacing}";  // Set spacing
 
-            string result = Esc + "SOH" + setFontSize + setFontType + setBold + setItalic + setUnderline + setAlignment + setSpacing + combinedText + CarriageReturn;
+            string result = Esc + "SOH" + setFontSize + setFontType + setBold + setItalic + setUnderline + setAlignment + setSpacing + combinedText;
+            if (includeCarriageReturn)
+            {
+                result += CarriageReturn; // Carriage return, false by default, optional
+            }
             _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result)}");
             return result;
         }
@@ -108,16 +113,17 @@ namespace EscpPrinterWrapperLib
         /// <param name="ratio">The ratio of the barcode.</param>
         /// <param name="printCharsBelow">Whether to print characters below the barcode.</param>
         /// <param name="alignment">Barcode alignment.</param>
+        /// <param name="includeCarriageReturn">Flag to include carriage return after text.</param>
         /// <returns>The wrapped barcode command.</returns>
         /// <example>
         /// <code>
         /// var wrapper = new EscpPrinterWrapper(null);
-        /// string command = wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center);
+        /// string command = wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, true);
         /// </code>
         /// </example>
-        public string WrapBarcode(string data, BarcodeType barcodeType, int height = 100, BarcodeWidth width = BarcodeWidth.Medium, BarcodeRatio ratio = BarcodeRatio.TwoToOne, bool printCharsBelow = true, Alignment alignment = Alignment.Left)
+        public string WrapBarcode(string data, BarcodeType barcodeType, int height = 100, BarcodeWidth width = BarcodeWidth.Medium, BarcodeRatio ratio = BarcodeRatio.TwoToOne, bool printCharsBelow = true, Alignment alignment = Alignment.Left, bool includeCarriageReturn = false)
         {
-            _logger.LogInformation($"Wrapping barcode: {data}, BarcodeType: {barcodeType}, Height: {height}, Width: {width}, Ratio: {ratio}, PrintCharsBelow: {printCharsBelow}, Alignment: {alignment}");
+            _logger.LogInformation($"Wrapping barcode: {data}, BarcodeType: {barcodeType}, Height: {height}, Width: {width}, Ratio: {ratio}, PrintCharsBelow: {printCharsBelow}, Alignment: {alignment}, CarriageReturn: {includeCarriageReturn}");
 
             string setType = $"{Esc}i{(char)barcodeType}";  // Barcode type
             string setHeight = $"{Esc}h{height:D2}";  // Height
@@ -129,10 +135,16 @@ namespace EscpPrinterWrapperLib
             // Determine the end of barcode command based on barcode type
             string endOfBarcode = barcodeType == BarcodeType.CODE128 ? "\\\\" : "\\";
 
-            string command = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{endOfBarcode}";
-            _logger.LogInformation($"Resulting command: {EscapeNonPrintable(command)}");
+            string result = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{endOfBarcode}";
 
-            return command;
+            if (includeCarriageReturn)
+            {
+                result += CarriageReturn; // Carriage return, false by default, optional
+            }
+
+            _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result)}");
+
+            return result;
         }
 
         /// <summary>
@@ -173,8 +185,14 @@ namespace EscpPrinterWrapperLib
             int? verticalPosition = null)
         {
             _logger.LogInformation("Generating full print command with options: " +
-                $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, pageFormatWidth: {pageFormatWidth}, pageFormatHeight: {pageFormatHeight}, " +
-                $"pageLength: {pageLength}, leftMargin: {leftMargin}, rightMargin: {rightMargin}, horizontalPosition: {horizontalPosition}, verticalPosition: {verticalPosition}");
+                $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, " +
+                $"pageFormatWidth: {pageFormatWidth?.ToString() ?? "null"}, " +
+                $"pageFormatHeight: {pageFormatHeight?.ToString() ?? "null"}, " +
+                $"pageLength: {pageLength?.ToString() ?? "null"}, " +
+                $"leftMargin: {leftMargin?.ToString() ?? "null"}, " +
+                $"rightMargin: {rightMargin?.ToString() ?? "null"}, " +
+                $"horizontalPosition: {horizontalPosition?.ToString() ?? "null"}, " +
+                $"verticalPosition: {verticalPosition?.ToString() ?? "null"}");
 
             var sb = new StringBuilder();
             sb.Append(Init);
@@ -190,7 +208,6 @@ namespace EscpPrinterWrapperLib
             foreach (var command in wrappedCommands)
             {
                 sb.Append(command);
-                sb.Append(CarriageReturn);  // Add carriage return after each command
             }
 
             if (cutPaper) sb.Append(Cut);
@@ -218,7 +235,6 @@ namespace EscpPrinterWrapperLib
                 else
                 {
                     sb.Append(c);
-                    sb.Append(CarriageReturn);
                 }
             }
             return sb.ToString();

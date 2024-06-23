@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using EscpPrinterWrapperLib;
 using EscpPrinterWrapperLib.Enums;
+using System.Reflection;
 
 namespace EscpPrinterWrapperConsole
 {
@@ -17,6 +18,17 @@ namespace EscpPrinterWrapperConsole
     /// </remarks>
     class Program
     {
+        private static readonly Assembly assembly;
+        private static readonly string title;
+        private static readonly string version;
+
+        static Program()
+        {
+            assembly = Assembly.GetExecutingAssembly();
+            title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "Unknown Application";
+            version = assembly.GetName().Version?.ToString() ?? "Unknown Version";
+        }
+
         static void Main(string[] args)
         {
             // Setup logging
@@ -38,9 +50,10 @@ namespace EscpPrinterWrapperConsole
                 return;
             }
 
+            Console.WriteLine($"Program class for demonstrating the use of EscpPrinterWrapper library.\n");
+
             string outputFile = args[0];
             List<string> commands = new List<string>();
-
             var printerWrapper = new EscpPrinterWrapper(serviceProvider.GetService<ILogger<EscpPrinterWrapper>>());
 
             try
@@ -68,7 +81,8 @@ namespace EscpPrinterWrapperConsole
                         Underline underline = Enum.Parse<Underline>(parameters[6], true);
                         Alignment alignment = Enum.Parse<Alignment>(parameters[7], true);
                         Spacing spacing = parameters.Length > 8 ? Enum.Parse<Spacing>(parameters[8], true) : Spacing.Normal;
-                        commands.Add(printerWrapper.WrapText(text1, text2, fontSize, fontType, bold, italic, underline, alignment, spacing));
+                        bool includeCarriageReturn = parameters.Length > 9 && bool.Parse(parameters[9]);
+                        commands.Add(printerWrapper.WrapText(text1, text2, fontSize, fontType, bold, italic, underline, alignment, spacing, includeCarriageReturn));
                     }
                     else if (args[i].StartsWith("barcode:"))
                     {
@@ -85,7 +99,8 @@ namespace EscpPrinterWrapperConsole
                         BarcodeRatio ratio = Enum.Parse<BarcodeRatio>(parameters[4], true); // Default ratio
                         bool printCharsBelow = bool.Parse(parameters[5]);
                         Alignment alignment = Enum.Parse<Alignment>(parameters[6], true);
-                        commands.Add(printerWrapper.WrapBarcode(data, barcodeType, height, width, ratio, printCharsBelow, alignment));
+                        bool includeCarriageReturn = parameters.Length > 7 && bool.Parse(parameters[7]);
+                        commands.Add(printerWrapper.WrapBarcode(data, barcodeType, height, width, ratio, printCharsBelow, alignment, includeCarriageReturn));
                     }
                 }
 
@@ -115,6 +130,8 @@ namespace EscpPrinterWrapperConsole
 
                 // Write result to output file
                 File.WriteAllText(outputFile, printCommand);
+                Console.WriteLine($"\n*******************************************");
+                Console.WriteLine($"{title} - Version {version}\n");
                 logger.LogInformation($"Print command written to {outputFile}");
             }
             catch (ArgumentException ex)
@@ -138,10 +155,12 @@ namespace EscpPrinterWrapperConsole
         /// </summary>
         private static void PrintUsage()
         {
+            Console.WriteLine($"{title} - Version {version}");
+            Console.WriteLine($"*******************************************\n");
             Console.WriteLine("Usage: dotnet run <output file> <commands> [options]");
             Console.WriteLine("Commands:");
-            Console.WriteLine("  text:<text1>,<text2>,<fontSize>,<fontType>,<bold>,<italic>,<underline>,<alignment>,<spacing>");
-            Console.WriteLine("  barcode:<data>,<barcodeType>,<height>,<width>,<ratio>,<printCharsBelow>,<alignment>");
+            Console.WriteLine("  text:<text1>,<text2>,<fontSize>,<fontType>,<bold>,<italic>,<underline>,<alignment>,<spacing>,<includeCarriageReturn>");
+            Console.WriteLine("  barcode:<data>,<barcodeType>,<height>,<width>,<ratio>,<printCharsBelow>,<alignment>,<includeCarriageReturn>");
             Console.WriteLine("Options:");
             Console.WriteLine("  --cutPaper          Cut the paper after printing.");
             Console.WriteLine("  --landscape         Print in landscape orientation.");
