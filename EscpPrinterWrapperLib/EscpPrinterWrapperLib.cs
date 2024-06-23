@@ -13,7 +13,6 @@ namespace EscpPrinterWrapperLib
     /// <remarks>
     /// This class provides methods to generate ESC/P commands for printing text and barcodes.
     /// </remarks>
-
     public class EscpPrinterWrapper
     {
         private readonly ILogger<EscpPrinterWrapper> _logger;
@@ -128,7 +127,7 @@ namespace EscpPrinterWrapperLib
             string setAlignment = $"{Esc}a{(int)alignment}";  // Alignment
 
             // Determine the end of barcode command based on barcode type
-            string endOfBarcode = barcodeType == BarcodeType.CODE128 ? "\\\\\\\\" : "\\";
+            string endOfBarcode = barcodeType == BarcodeType.CODE128 ? "\\\\" : "\\";
 
             string command = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{endOfBarcode}";
             _logger.LogInformation($"Resulting command: {EscapeNonPrintable(command)}");
@@ -191,6 +190,7 @@ namespace EscpPrinterWrapperLib
             foreach (var command in wrappedCommands)
             {
                 sb.Append(command);
+                sb.Append(CarriageReturn);  // Add carriage return after each command
             }
 
             if (cutPaper) sb.Append(Cut);
@@ -213,11 +213,12 @@ namespace EscpPrinterWrapperLib
             {
                 if (char.IsControl(c))
                 {
-                    sb.Append($"\\u{(int)c:x4}");
+                    sb.Append($"\\u{((int)c):x4}");
                 }
                 else
                 {
                     sb.Append(c);
+                    sb.Append(CarriageReturn);
                 }
             }
             return sb.ToString();

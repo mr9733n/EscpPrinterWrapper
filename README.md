@@ -75,7 +75,7 @@ Running the Application
 
 ### To run the application, use the following command:
 ```sh
-.\EscpPrinterWrapperConsole.exe output.txt "text:'Hello','World',24,Helsinki,true,false,Single,Center,Wide" "barcode:123456789,CODE128,70,Medium,TwoToOne,true,Center" --cutPaper --landscape
+.\EscpPrinterWrapperConsole.exe output.txt "text:Hello,World,24,Helsinki,true,false,Single,Center,Wide" "text:Hello,World,24,Helsinki,true,false,Single,Center,Wide" "barcode:123456789,CODE128,70,Medium,TwoToOne,true,Center" --cutPaper --landscape
 ```
 
 ## Options

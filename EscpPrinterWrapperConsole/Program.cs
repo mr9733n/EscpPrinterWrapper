@@ -15,8 +15,6 @@ namespace EscpPrinterWrapperConsole
     /// <remarks>
     /// This class sets up logging and processes command line arguments to generate ESC/P commands for a QL-8XX series printer.
     /// </remarks>
-    /// <author>Dima Green</author>
-    /// <version>1.0.2</version>
     class Program
     {
         static void Main(string[] args)
@@ -54,12 +52,12 @@ namespace EscpPrinterWrapperConsole
                     {
                         var parameters = SplitParameters(args[i].Substring(5), logger);
                         logger.LogInformation($"Text parameters: {string.Join(", ", parameters)}");
-                        if (parameters.Length < 9)
+                        if (parameters.Length < 8)
                         {
                             throw new ArgumentException("Insufficient parameters for text command.");
                         }
-                        string text1 = parameters[0].Trim('\'');
-                        string text2 = parameters[1].Trim('\'');
+                        string text1 = parameters[0];
+                        string text2 = parameters[1];
                         if (!int.TryParse(parameters[2], out int fontSize))
                         {
                             throw new FormatException($"Invalid fontSize: {parameters[2]}");
@@ -69,24 +67,24 @@ namespace EscpPrinterWrapperConsole
                         Italic italic = bool.Parse(parameters[5]) ? Italic.On : Italic.Off;
                         Underline underline = Enum.Parse<Underline>(parameters[6], true);
                         Alignment alignment = Enum.Parse<Alignment>(parameters[7], true);
-                        Spacing spacing = Enum.Parse<Spacing>(parameters[8], true);
+                        Spacing spacing = parameters.Length > 8 ? Enum.Parse<Spacing>(parameters[8], true) : Spacing.Normal;
                         commands.Add(printerWrapper.WrapText(text1, text2, fontSize, fontType, bold, italic, underline, alignment, spacing));
                     }
                     else if (args[i].StartsWith("barcode:"))
                     {
                         var parameters = SplitParameters(args[i].Substring(8), logger);
                         logger.LogInformation($"Barcode parameters: {string.Join(", ", parameters)}");
-                        if (parameters.Length < 6)
+                        if (parameters.Length < 7)
                         {
                             throw new ArgumentException("Insufficient parameters for barcode command.");
                         }
                         string data = parameters[0];
                         BarcodeType barcodeType = Enum.Parse<BarcodeType>(parameters[1], true);
-                        int height = parameters.Length > 2 && int.TryParse(parameters[2], out int h) ? h : 100; // Default height
-                        BarcodeWidth width = parameters.Length > 3 ? Enum.Parse<BarcodeWidth>(parameters[3], true) : BarcodeWidth.Medium; // Default width
-                        BarcodeRatio ratio = parameters.Length > 4 ? Enum.Parse<BarcodeRatio>(parameters[4], true) : BarcodeRatio.TwoToOne; // Default ratio
-                        bool printCharsBelow = parameters.Length > 5 && bool.Parse(parameters[5]);
-                        Alignment alignment = parameters.Length > 6 ? Enum.Parse<Alignment>(parameters[6], true) : Alignment.Left;
+                        int height = int.TryParse(parameters[2], out int h) ? h : 100; // Default height
+                        BarcodeWidth width = Enum.Parse<BarcodeWidth>(parameters[3], true); // Default width
+                        BarcodeRatio ratio = Enum.Parse<BarcodeRatio>(parameters[4], true); // Default ratio
+                        bool printCharsBelow = bool.Parse(parameters[5]);
+                        Alignment alignment = Enum.Parse<Alignment>(parameters[6], true);
                         commands.Add(printerWrapper.WrapBarcode(data, barcodeType, height, width, ratio, printCharsBelow, alignment));
                     }
                 }
@@ -140,7 +138,6 @@ namespace EscpPrinterWrapperConsole
         /// </summary>
         private static void PrintUsage()
         {
-            Console.WriteLine("dneijwsncjekswcnoikds");
             Console.WriteLine("Usage: dotnet run <output file> <commands> [options]");
             Console.WriteLine("Commands:");
             Console.WriteLine("  text:<text1>,<text2>,<fontSize>,<fontType>,<bold>,<italic>,<underline>,<alignment>,<spacing>");
@@ -179,7 +176,7 @@ namespace EscpPrinterWrapperConsole
                 }
                 else if (c == ',' && !inQuotes)
                 {
-                    parameters.Add(currentParameter.ToString().Trim());
+                    parameters.Add(currentParameter.ToString().Trim('\'').Trim());
                     currentParameter.Clear();
                 }
                 else
@@ -190,7 +187,7 @@ namespace EscpPrinterWrapperConsole
 
             if (currentParameter.Length > 0)
             {
-                parameters.Add(currentParameter.ToString().Trim());
+                parameters.Add(currentParameter.ToString().Trim('\'').Trim());
             }
 
             logger.LogInformation($"SplitParameters: {string.Join(", ", parameters)}");
