@@ -16,7 +16,7 @@ namespace EscpPrinterWrapperConsole
     /// This class sets up logging and processes command line arguments to generate ESC/P commands for a QL-8XX series printer.
     /// </remarks>
     /// <author>Dima Green</author>
-    /// <version>1.0.1</version>
+    /// <version>1.0.2</version>
     class Program
     {
         static void Main(string[] args)
@@ -54,22 +54,23 @@ namespace EscpPrinterWrapperConsole
                     {
                         var parameters = SplitParameters(args[i].Substring(5), logger);
                         logger.LogInformation($"Text parameters: {string.Join(", ", parameters)}");
-                        if (parameters.Length < 2)
+                        if (parameters.Length < 3)
                         {
                             throw new ArgumentException("Insufficient parameters for text command.");
                         }
-                        string text = parameters[0];
-                        if (!int.TryParse(parameters[1], out int fontSize))
+                        string text1 = parameters[0].Trim('\'');
+                        string text2 = parameters[1].Trim('\'');
+                        if (!int.TryParse(parameters[2], out int fontSize))
                         {
-                            throw new FormatException($"Invalid fontSize: {parameters[1]}");
+                            throw new FormatException($"Invalid fontSize: {parameters[2]}");
                         }
-                        FontType fontType = parameters.Length > 2 ? Enum.Parse<FontType>(parameters[2], true) : FontType.Helsinki;
-                        Bold bold = parameters.Length > 3 && bool.Parse(parameters[3]) ? Bold.On : Bold.Off;
-                        Italic italic = parameters.Length > 4 && bool.Parse(parameters[4]) ? Italic.On : Italic.Off;
-                        Underline underline = parameters.Length > 5 ? Enum.Parse<Underline>(parameters[5], true) : Underline.None;
-                        Alignment alignment = parameters.Length > 6 ? Enum.Parse<Alignment>(parameters[6], true) : Alignment.Left;
-                        Spacing spacing = parameters.Length > 7 ? Enum.Parse<Spacing>(parameters[7], true) : Spacing.Normal;
-                        commands.Add(printerWrapper.WrapText(text, fontSize, fontType, bold, italic, underline, alignment, spacing));
+                        FontType fontType = parameters.Length > 3 ? Enum.Parse<FontType>(parameters[3], true) : FontType.Brougham;
+                        Bold bold = parameters.Length > 4 && bool.Parse(parameters[4]) ? Bold.On : Bold.Off;
+                        Italic italic = parameters.Length > 5 && bool.Parse(parameters[5]) ? Italic.On : Italic.Off;
+                        Underline underline = parameters.Length > 6 ? Enum.Parse<Underline>(parameters[6], true) : Underline.None;
+                        Alignment alignment = parameters.Length > 7 ? Enum.Parse<Alignment>(parameters[7], true) : Alignment.Left;
+                        Spacing spacing = parameters.Length > 8 ? Enum.Parse<Spacing>(parameters[8], true) : Spacing.Normal;
+                        commands.Add(printerWrapper.WrapText(text1, text2, fontSize, fontType, bold, italic, underline, alignment, spacing));
                     }
                     else if (args[i].StartsWith("barcode:"))
                     {
@@ -141,7 +142,7 @@ namespace EscpPrinterWrapperConsole
         {
             Console.WriteLine("Usage: dotnet run <output file> <commands> [options]");
             Console.WriteLine("Commands:");
-            Console.WriteLine("  text:<text>,<fontSize>,<fontType>,<bold>,<italic>,<underline>,<alignment>,<spacing>");
+            Console.WriteLine("  text:<text1>,<text2>,<fontSize>,<fontType>,<bold>,<italic>,<underline>,<alignment>,<spacing>");
             Console.WriteLine("  barcode:<data>,<barcodeType>,<height>,<width>,<ratio>,<printCharsBelow>,<alignment>");
             Console.WriteLine("Options:");
             Console.WriteLine("  --cutPaper          Cut the paper after printing.");

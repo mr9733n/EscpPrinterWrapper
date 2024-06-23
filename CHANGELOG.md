@@ -13,3 +13,27 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - N/A
+
+## [1.0.1] - 2024-06-25
+
+### Added
+- Additional font support.
+- Carriage return support.
+
+### Fixed
+- N/A
+
+### Changed
+- Code refactoring for improved readability and maintainability.
+
+- ## [1.0.2] - 2024-06-25
+
+### Added
+- Support for horizontal tabulation.
+- Ability to input and wrap two text strings.
+
+### Fixed
+- Correct handling of text input with single quotes.
+
+### Changed
+- Further code refactoring for optimization.

@@ -13,8 +13,7 @@ namespace EscpPrinterWrapperLib
     /// <remarks>
     /// This class provides methods to generate ESC/P commands for printing text and barcodes.
     /// </remarks>
-    /// <author>Dima Green</author>
-    /// <version>1.0.1</version>
+
     public class EscpPrinterWrapper
     {
         private readonly ILogger<EscpPrinterWrapper> _logger;
@@ -44,11 +43,24 @@ namespace EscpPrinterWrapperLib
         private const string SpecifyVerticalPosition = Esc + "(V";
         private const string SpecifyAlignment = Esc + "a";
         private const string CarriageReturn = "\r";  // CR (0D)
+        private const string HorizontalTab = "\u0009";  // HT (09)
+
+        /// <summary>
+        /// Inserts horizontal tabs between words in the given text.
+        /// </summary>
+        /// <param name="text1">The first part of the text.</param>
+        /// <param name="text2">The second part of the text.</param>
+        /// <returns>The text with tabs inserted between words.</returns>
+        public string InsertTabsBetweenWords(string text1, string text2)
+        {
+            return $"{text1}{HorizontalTab}{text2}";
+        }
 
         /// <summary>
         /// Wraps text with ESC/P commands for the specified styles.
         /// </summary>
-        /// <param name="text">The text to wrap.</param>
+        /// <param name="text1">The first part of the text to wrap.</param>
+        /// <param name="text2">The second part of the text to wrap.</param>
         /// <param name="fontSize">The font size.</param>
         /// <param name="fontType">The font type.</param>
         /// <param name="bold">Bold setting.</param>
@@ -61,18 +73,19 @@ namespace EscpPrinterWrapperLib
         /// <example>
         /// <code>
         /// var wrapper = new EscpPrinterWrapper(null);
-        /// string command = wrapper.WrapText("Hello World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
+        /// string command = wrapper.WrapText("Hello", "World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
         /// </code>
         /// </example>
-        public string WrapText(string text, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal)
+        public string WrapText(string text1, string text2, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal)
         {
-            _logger.LogInformation($"Wrapping text: {text}, FontSize: {fontSize}, FontType: {fontType}, Bold: {bold}, Italic: {italic}, Underline: {underline}, Alignment: {alignment}, Spacing: {spacing}");
+            _logger.LogInformation($"Wrapping text: {text1} {text2}, FontSize: {fontSize}, FontType: {fontType}, Bold: {bold}, Italic: {italic}, Underline: {underline}, Alignment: {alignment}, Spacing: {spacing}");
 
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text1) || string.IsNullOrEmpty(text2))
             {
-                throw new ArgumentException("Text cannot be null or empty.", nameof(text));
+                throw new ArgumentException("Text cannot be null or empty.", nameof(text1) + " or " + nameof(text2));
             }
 
+            string combinedText = InsertTabsBetweenWords(text1, text2);
             string setFontSize = $"{Esc}X{fontSize}";  // Set font size (for bitmap fonts min: 24, for outline fonts min: 33)
             string setFontType = $"{Esc}k{(char)fontType}";  // Set font type
             string setBold = $"{Esc}{(char)bold}";  // Set bold
@@ -81,7 +94,7 @@ namespace EscpPrinterWrapperLib
             string setAlignment = $"{Esc}a{(int)alignment}";  // Set alignment
             string setSpacing = $"{Esc} {(char)spacing}";  // Set spacing
 
-            string result = Esc + "SOH" + setFontSize + setFontType + setBold + setItalic + setUnderline + setAlignment + setSpacing + text + LineFeed;
+            string result = Esc + "SOH" + setFontSize + setFontType + setBold + setItalic + setUnderline + setAlignment + setSpacing + combinedText + CarriageReturn;
             _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result)}");
             return result;
         }

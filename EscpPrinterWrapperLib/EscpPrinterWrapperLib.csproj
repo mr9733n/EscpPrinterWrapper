@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<Company>9733</Company>
 		<Authors>Dima Green</Authors>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<Description>ESC/P Printer Wrapper Library for QL-8XX Series Printers</Description>
 	</PropertyGroup>
 

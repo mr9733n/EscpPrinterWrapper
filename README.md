@@ -24,9 +24,10 @@ dotnet build
 
 ```csharp
 using EscpPrinterWrapperLib;
+using EscpPrinterWrapperLib.Enums;
 
 var printerWrapper = new EscpPrinterWrapper();
-string textCommand = printerWrapper.WrapText("Hello World", 24, FontType.FontA, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
+string textCommand = printerWrapper.WrapText("Hello World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
 Console.WriteLine(textCommand);
 ```
 
@@ -34,6 +35,7 @@ Console.WriteLine(textCommand);
 
 ```csharp
 using EscpPrinterWrapperLib;
+using EscpPrinterWrapperLib.Enums;
 
 var printerWrapper = new EscpPrinterWrapper();
 string barcodeCommand = printerWrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center);
@@ -44,12 +46,13 @@ Console.WriteLine(barcodeCommand);
 
 ```csharp
 using EscpPrinterWrapperLib;
+using EscpPrinterWrapperLib.Enums;
 using System.Collections.Generic;
 
 var printerWrapper = new EscpPrinterWrapper();
 var commands = new List<string>
 {
-    printerWrapper.WrapText("Test", 24, FontType.FontA, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
+    printerWrapper.WrapText("Test", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
     printerWrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center)
 };
 string printCommand = printerWrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
@@ -61,7 +64,7 @@ Console.WriteLine(printCommand);
 To run the tests, you can use the .NET CLI:
 
 ```sh
-dotnet test
+ dotnet test --runtime win-x64
 ```
 
 ## Console Application Usage
@@ -72,7 +75,7 @@ Running the Application
 
 ### To run the application, use the following command:
 ```sh
-.\EscpPrinterWrapperConsole.exe output.txt "text:Test,24,FontA,true,false,Single,Center,Wide" "barcode:123456789,CODE128,70,Medium,TwoToOne,true,Center" --cutPaper --landscape
+.\EscpPrinterWrapperConsole.exe output.txt "text:'Hello','World',24,Helsinki,true,false,Single,Center,Wide" "barcode:123456789,CODE128,70,Medium,TwoToOne,true,Center" --cutPaper --landscape
 ```
 
 ## Options

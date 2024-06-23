@@ -5,7 +5,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<Company>9733</Company>
 		<Authors>Dima Green</Authors>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<Description>Console Application for ESC/P Printer Wrapper</Description>
 	</PropertyGroup>
 
