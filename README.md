@@ -13,7 +13,7 @@ EscpPrinterWrapperLib is a .NET library for generating ESC/P commands for text a
 To install EscpPrinterWrapperLib, you can clone the repository and build the project using .NET CLI.
 
 ```sh
-git clone https://github.com/mr9733n/EscpPrinterWrapperLib.git
+git clone https://github.com/mr9733n/EscpPrinterWrapper.git
 cd EscpPrinterWrapperLib
 dotnet build
 ```
@@ -27,7 +27,7 @@ using EscpPrinterWrapperLib;
 using EscpPrinterWrapperLib.Enums;
 
 var printerWrapper = new EscpPrinterWrapper();
-string textCommand = printerWrapper.WrapText("Hello World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
+string textCommand = printerWrapper.WrapText("Hello World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, includeCarriageReturn: true);
 Console.WriteLine(textCommand);
 ```
 
@@ -38,7 +38,7 @@ using EscpPrinterWrapperLib;
 using EscpPrinterWrapperLib.Enums;
 
 var printerWrapper = new EscpPrinterWrapper();
-string barcodeCommand = printerWrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center);
+string barcodeCommand = printerWrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, includeCarriageReturn: false);
 Console.WriteLine(barcodeCommand);
 ```
 
@@ -52,8 +52,8 @@ using System.Collections.Generic;
 var printerWrapper = new EscpPrinterWrapper();
 var commands = new List<string>
 {
-    printerWrapper.WrapText("Test", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
-    printerWrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center)
+    printerWrapper.WrapText("Test", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, includeCarriageReturn: false),
+    printerWrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, includeCarriageReturn: false)
 };
 string printCommand = printerWrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
 Console.WriteLine(printCommand);
@@ -75,7 +75,7 @@ Running the Application
 
 ### To run the application, use the following command:
 ```sh
-.\EscpPrinterWrapperConsole.exe output.txt "text:Hello,World,24,Helsinki,true,false,Single,Center,Wide" "text:Hello,World,24,Helsinki,true,false,Single,Center,Wide" "barcode:123456789,CODE128,70,Medium,TwoToOne,true,Center" --cutPaper --landscape
+.\EscpPrinterWrapperConsole.exe output.txt "text:'Hello','World',24,Helsinki,true,false,Single,Center,Wide,true"  "text:'Hello','World',24,Helsinki,true,false,Single,Center,Wide,true" "barcode:123456789,CODE128,70,Medium,TwoToOne,true,Center,true" --cutPaper --landscape
 ```
 
 ## Options

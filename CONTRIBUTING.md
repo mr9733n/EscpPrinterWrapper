@@ -1,5 +1,5 @@
 
-# Contributing to EscpPrinterWrapperLib
+# Contributing to EscpPrinterWrapper
 
 Thank you for considering contributing to EscpPrinterWrapperLib! We welcome contributions from the community.
 
@@ -8,7 +8,7 @@ Thank you for considering contributing to EscpPrinterWrapperLib! We welcome cont
 1. **Fork the repository**: Click the 'Fork' button at the top right of the repository page.
 2. **Clone your fork**: 
     ```sh
-    git clone https://github.com/mr9733n/EscpPrinterWrapperLib.git
+    git clone https://github.com/mr9733n/EscpPrinterWrapper.git
     ```
 3. **Create a new branch**: 
     ```sh
