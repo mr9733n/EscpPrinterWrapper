@@ -124,12 +124,13 @@ namespace EscpPrinterWrapperLib
             string setHeight = $"{Esc}h{height:D2}";  // Height
             string setWidth = $"{Esc}w{(char)width}";  // Width
             string setRatio = $"{Esc}z{(char)ratio}";  // Ratio
-
-
             string setCharsBelow = $"{Esc}r{(printCharsBelow ? '1' : '0')}";  // Characters below barcode
             string setAlignment = $"{Esc}a{(int)alignment}";  // Alignment
 
-            string command = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{EndOfBarcode}";
+            // Determine the end of barcode command based on barcode type
+            string endOfBarcode = barcodeType == BarcodeType.CODE128 ? "\\\\\\\\" : "\\";
+
+            string command = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{endOfBarcode}";
             _logger.LogInformation($"Resulting command: {EscapeNonPrintable(command)}");
 
             return command;

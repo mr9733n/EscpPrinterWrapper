@@ -54,7 +54,7 @@ namespace EscpPrinterWrapperConsole
                     {
                         var parameters = SplitParameters(args[i].Substring(5), logger);
                         logger.LogInformation($"Text parameters: {string.Join(", ", parameters)}");
-                        if (parameters.Length < 3)
+                        if (parameters.Length < 9)
                         {
                             throw new ArgumentException("Insufficient parameters for text command.");
                         }
@@ -64,12 +64,12 @@ namespace EscpPrinterWrapperConsole
                         {
                             throw new FormatException($"Invalid fontSize: {parameters[2]}");
                         }
-                        FontType fontType = parameters.Length > 3 ? Enum.Parse<FontType>(parameters[3], true) : FontType.Brougham;
-                        Bold bold = parameters.Length > 4 && bool.Parse(parameters[4]) ? Bold.On : Bold.Off;
-                        Italic italic = parameters.Length > 5 && bool.Parse(parameters[5]) ? Italic.On : Italic.Off;
-                        Underline underline = parameters.Length > 6 ? Enum.Parse<Underline>(parameters[6], true) : Underline.None;
-                        Alignment alignment = parameters.Length > 7 ? Enum.Parse<Alignment>(parameters[7], true) : Alignment.Left;
-                        Spacing spacing = parameters.Length > 8 ? Enum.Parse<Spacing>(parameters[8], true) : Spacing.Normal;
+                        FontType fontType = Enum.Parse<FontType>(parameters[3], true);
+                        Bold bold = bool.Parse(parameters[4]) ? Bold.On : Bold.Off;
+                        Italic italic = bool.Parse(parameters[5]) ? Italic.On : Italic.Off;
+                        Underline underline = Enum.Parse<Underline>(parameters[6], true);
+                        Alignment alignment = Enum.Parse<Alignment>(parameters[7], true);
+                        Spacing spacing = Enum.Parse<Spacing>(parameters[8], true);
                         commands.Add(printerWrapper.WrapText(text1, text2, fontSize, fontType, bold, italic, underline, alignment, spacing));
                     }
                     else if (args[i].StartsWith("barcode:"))
@@ -140,6 +140,7 @@ namespace EscpPrinterWrapperConsole
         /// </summary>
         private static void PrintUsage()
         {
+            Console.WriteLine("dneijwsncjekswcnoikds");
             Console.WriteLine("Usage: dotnet run <output file> <commands> [options]");
             Console.WriteLine("Commands:");
             Console.WriteLine("  text:<text1>,<text2>,<fontSize>,<fontType>,<bold>,<italic>,<underline>,<alignment>,<spacing>");
