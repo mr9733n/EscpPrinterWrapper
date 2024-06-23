@@ -53,7 +53,7 @@ namespace EscpPrinterWrapperConsole
             Console.WriteLine($"Program class for demonstrating the use of EscpPrinterWrapper library.\n");
 
             string outputFile = args[0];
-            List<string> commands = new List<string>();
+            List<byte[]> commands = new List<byte[]>();
             var printerWrapper = new EscpPrinterWrapper(serviceProvider.GetService<ILogger<EscpPrinterWrapper>>());
 
             try
@@ -116,7 +116,7 @@ namespace EscpPrinterWrapperConsole
                 int? verticalPosition = GetArgumentValue(args, "--verticalPosition");
 
                 // Generate full print command with options
-                string printCommand = printerWrapper.GeneratePrintCommand(
+                byte[] printCommandBytes = printerWrapper.GeneratePrintCommand(
                     commands,
                     cutPaper: cutPaper,
                     landscapeOrientation: landscapeOrientation,
@@ -127,6 +127,9 @@ namespace EscpPrinterWrapperConsole
                     rightMargin: rightMargin,
                     horizontalPosition: horizontalPosition,
                     verticalPosition: verticalPosition);
+
+                // Convert byte array to string for output
+                string printCommand = Encoding.ASCII.GetString(printCommandBytes);
 
                 // Write result to output file
                 File.WriteAllText(outputFile, printCommand);
@@ -217,8 +220,8 @@ namespace EscpPrinterWrapperConsole
         /// Retrieves the value of a specific argument from the command line arguments.
         /// </summary>
         /// <param name="args">The command line arguments.</param>
-        /// <param name="argumentName">The name of the argument to retrieve.</param>
-        /// <returns>The value of the argument, or null if not found.</returns>
+        /// The name of the argument to retrieve.
+        /// The value of the argument, or null if not found.
         private static int? GetArgumentValue(string[] args, string argumentName)
         {
             int index = Array.FindIndex(args, arg => arg == argumentName);

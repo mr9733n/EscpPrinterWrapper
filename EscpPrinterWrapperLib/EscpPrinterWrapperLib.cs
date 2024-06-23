@@ -27,22 +27,23 @@ namespace EscpPrinterWrapperLib
         }
 
         // ESC/P control codes
-        private const string Esc = "\u001B";
-        private const string Init = Esc + "@";
-        private const string LineFeed = "\n";
-        private const string EndOfBarcode = "\\";
-        private const string FormFeed = "\u000C";
-        private const string Cut = Esc + "iC";
-        private const string SelectLandscapeOrientation = Esc + "iL";
-        private const string SpecifyPageFormat = Esc + "(c";
-        private const string SpecifyPageLength = Esc + "(C";
-        private const string SpecifyLeftMargin = Esc + "l";
-        private const string SpecifyRightMargin = Esc + "Q";
-        private const string SpecifyHorizontalPosition = Esc + "$";
-        private const string SpecifyVerticalPosition = Esc + "(V";
-        private const string SpecifyAlignment = Esc + "a";
-        private const string CarriageReturn = "\r";  // CR (0D)
-        private const string HorizontalTab = "\u0009";  // HT (09)
+        private static readonly byte[] Esc = { 0x1B };
+        private static readonly byte[] Init = { 0x1B, 0x40 };
+        private static readonly byte[] LineFeed = { 0x0A };
+        private static readonly byte[] EndOfBarcode = { 0x5C };
+        private static readonly byte[] FormFeed = { 0x0C };
+        private static readonly byte[] Cut = { 0x1B, 0x69, 0x43 };
+        private static readonly byte[] SelectLandscapeOrientation = { 0x1B, 0x69, 0x4C };
+        private static readonly byte[] SpecifyPageFormat = { 0x1B, 0x28, 0x63 };
+        private static readonly byte[] SpecifyPageLength = { 0x1B, 0x28, 0x43 };
+        private static readonly byte[] SpecifyLeftMargin = { 0x1B, 0x6C };
+        private static readonly byte[] SpecifyRightMargin = { 0x1B, 0x51 };
+        private static readonly byte[] SpecifyHorizontalPosition = { 0x1B, 0x24 };
+        private static readonly byte[] SpecifyVerticalPosition = { 0x1B, 0x28, 0x56 };
+        private static readonly byte[] SpecifyAlignment = { 0x1B, 0x61 };
+        private static readonly byte[] CarriageReturn = { 0x0D };
+        private static readonly byte[] HorizontalTab = { 0x09 };
+
 
         /// <summary>
         /// Inserts horizontal tabs between words in the given text.
@@ -50,9 +51,13 @@ namespace EscpPrinterWrapperLib
         /// <param name="text1">The first part of the text.</param>
         /// <param name="text2">The second part of the text.</param>
         /// <returns>The text with tabs inserted between words.</returns>
-        public string InsertTabsBetweenWords(string text1, string text2)
+        public byte[] InsertTabsBetweenWords(string text1, string text2)
         {
-            return $"{text1}{HorizontalTab}{text2}";
+            var result = new List<byte>();
+            result.AddRange(Encoding.ASCII.GetBytes(text1));
+            result.AddRange(HorizontalTab);
+            result.AddRange(Encoding.ASCII.GetBytes(text2));
+            return result.ToArray();
         }
 
         /// <summary>
@@ -76,7 +81,7 @@ namespace EscpPrinterWrapperLib
         /// string command = wrapper.WrapText("Hello", "World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, true);
         /// </code>
         /// </example>
-        public string WrapText(string text1, string text2, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal, bool includeCarriageReturn = false)
+        public byte[] WrapText(string text1, string text2, int fontSize, FontType fontType = FontType.Brougham, Bold bold = Bold.Off, Italic italic = Italic.Off, Underline underline = Underline.None, Alignment alignment = Alignment.Left, Spacing spacing = Spacing.Normal, bool includeCarriageReturn = false)
         {
             _logger.LogInformation($"Wrapping text: {text1} {text2}, FontSize: {fontSize}, FontType: {fontType}, Bold: {bold}, Italic: {italic}, Underline: {underline}, Alignment: {alignment}, Spacing: {spacing}, CarriageReturn: {includeCarriageReturn}");
 
@@ -85,22 +90,32 @@ namespace EscpPrinterWrapperLib
                 throw new ArgumentException("Text cannot be null or empty.", nameof(text1) + " or " + nameof(text2));
             }
 
-            string combinedText = InsertTabsBetweenWords(text1, text2);
-            string setFontSize = $"{Esc}X{fontSize}";  // Set font size (for bitmap fonts min: 24, for outline fonts min: 33)
-            string setFontType = $"{Esc}k{(char)fontType}";  // Set font type
-            string setBold = $"{Esc}{(char)bold}";  // Set bold
-            string setItalic = $"{Esc}{(char)italic}";  // Set italic
-            string setUnderline = $"{Esc}-{(char)underline}";  // Set underline
-            string setAlignment = $"{Esc}a{(int)alignment}";  // Set alignment
-            string setSpacing = $"{Esc} {(char)spacing}";  // Set spacing
+            var result = new List<byte>();
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes("SOH"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"X{fontSize}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"k{(char)fontType}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"{(char)bold}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"{(char)italic}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"-{(char)underline}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"a{(int)alignment}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($" {(char)spacing}"));
+            result.AddRange(InsertTabsBetweenWords(text1, text2));
 
-            string result = Esc + "SOH" + setFontSize + setFontType + setBold + setItalic + setUnderline + setAlignment + setSpacing + combinedText;
             if (includeCarriageReturn)
             {
-                result += CarriageReturn; // Carriage return, false by default, optional
+                result.AddRange(CarriageReturn);
             }
-            _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result)}");
-            return result;
+
+            _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result.ToArray())}");
+            return result.ToArray();
         }
 
         /// <summary>
@@ -121,30 +136,34 @@ namespace EscpPrinterWrapperLib
         /// string command = wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, true);
         /// </code>
         /// </example>
-        public string WrapBarcode(string data, BarcodeType barcodeType, int height = 100, BarcodeWidth width = BarcodeWidth.Medium, BarcodeRatio ratio = BarcodeRatio.TwoToOne, bool printCharsBelow = true, Alignment alignment = Alignment.Left, bool includeCarriageReturn = false)
+        public byte[] WrapBarcode(string data, BarcodeType barcodeType, int height = 100, BarcodeWidth width = BarcodeWidth.Medium, BarcodeRatio ratio = BarcodeRatio.TwoToOne, bool printCharsBelow = true, Alignment alignment = Alignment.Left, bool includeCarriageReturn = false)
         {
             _logger.LogInformation($"Wrapping barcode: {data}, BarcodeType: {barcodeType}, Height: {height}, Width: {width}, Ratio: {ratio}, PrintCharsBelow: {printCharsBelow}, Alignment: {alignment}, CarriageReturn: {includeCarriageReturn}");
 
-            string setType = $"{Esc}i{(char)barcodeType}";  // Barcode type
-            string setHeight = $"{Esc}h{height:D2}";  // Height
-            string setWidth = $"{Esc}w{(char)width}";  // Width
-            string setRatio = $"{Esc}z{(char)ratio}";  // Ratio
-            string setCharsBelow = $"{Esc}r{(printCharsBelow ? '1' : '0')}";  // Characters below barcode
-            string setAlignment = $"{Esc}a{(int)alignment}";  // Alignment
+            var result = new List<byte>();
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"i{(char)barcodeType}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"h{height:D2}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"w{(char)width}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"z{(char)ratio}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"r{(printCharsBelow ? '1' : '0')}"));
+            result.AddRange(Esc);
+            result.AddRange(Encoding.ASCII.GetBytes($"a{(int)alignment}"));
 
-            // Determine the end of barcode command based on barcode type
             string endOfBarcode = barcodeType == BarcodeType.CODE128 ? "\\\\" : "\\";
-
-            string result = $"{setType}{setCharsBelow}{setHeight}{setWidth}{setRatio}{setAlignment}B{data}{endOfBarcode}";
+            result.AddRange(Encoding.ASCII.GetBytes($"B{data}{endOfBarcode}"));
 
             if (includeCarriageReturn)
             {
-                result += CarriageReturn; // Carriage return, false by default, optional
+                result.AddRange(CarriageReturn);
             }
 
-            _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result)}");
-
-            return result;
+            _logger.LogInformation($"Resulting command: {EscapeNonPrintable(result.ToArray())}");
+            return result.ToArray();
         }
 
         /// <summary>
@@ -172,17 +191,7 @@ namespace EscpPrinterWrapperLib
         /// string printCommand = wrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
         /// </code>
         /// </example>
-        public string GeneratePrintCommand(
-            List<string> wrappedCommands,
-            bool cutPaper = false,
-            bool landscapeOrientation = false,
-            int? pageFormatWidth = null,
-            int? pageFormatHeight = null,
-            int? pageLength = null,
-            int? leftMargin = null,
-            int? rightMargin = null,
-            int? horizontalPosition = null,
-            int? verticalPosition = null)
+        public byte[] GeneratePrintCommand(List<byte[]> wrappedCommands, bool cutPaper = false, bool landscapeOrientation = false, int? pageFormatWidth = null, int? pageFormatHeight = null, int? pageLength = null, int? leftMargin = null, int? rightMargin = null, int? horizontalPosition = null, int? verticalPosition = null)
         {
             _logger.LogInformation("Generating full print command with options: " +
                 $"cutPaper: {cutPaper}, landscapeOrientation: {landscapeOrientation}, " +
@@ -194,28 +203,51 @@ namespace EscpPrinterWrapperLib
                 $"horizontalPosition: {horizontalPosition?.ToString() ?? "null"}, " +
                 $"verticalPosition: {verticalPosition?.ToString() ?? "null"}");
 
-            var sb = new StringBuilder();
-            sb.Append(Init);
+            var result = new List<byte>();
+            result.AddRange(Init);
 
-            if (landscapeOrientation) sb.Append(SelectLandscapeOrientation);
-            if (pageFormatWidth.HasValue && pageFormatHeight.HasValue) sb.Append($"{SpecifyPageFormat}{(char)pageFormatWidth}{(char)pageFormatHeight}");
-            if (pageLength.HasValue) sb.Append($"{SpecifyPageLength}{(char)pageLength}");
-            if (leftMargin.HasValue) sb.Append($"{SpecifyLeftMargin}{(char)leftMargin}");
-            if (rightMargin.HasValue) sb.Append($"{SpecifyRightMargin}{(char)rightMargin}");
-            if (horizontalPosition.HasValue) sb.Append($"{SpecifyHorizontalPosition}{(char)horizontalPosition}");
-            if (verticalPosition.HasValue) sb.Append($"{SpecifyVerticalPosition}{(char)verticalPosition}");
+            if (landscapeOrientation) result.AddRange(SelectLandscapeOrientation);
+            if (pageFormatWidth.HasValue && pageFormatHeight.HasValue)
+            {
+                result.AddRange(SpecifyPageFormat);
+                result.AddRange(new byte[] { (byte)pageFormatWidth.Value, (byte)pageFormatHeight.Value });
+            }
+            if (pageLength.HasValue)
+            {
+                result.AddRange(SpecifyPageLength);
+                result.AddRange(new byte[] { (byte)pageLength.Value });
+            }
+            if (leftMargin.HasValue)
+            {
+                result.AddRange(SpecifyLeftMargin);
+                result.AddRange(new byte[] { (byte)leftMargin.Value });
+            }
+            if (rightMargin.HasValue)
+            {
+                result.AddRange(SpecifyRightMargin);
+                result.AddRange(new byte[] { (byte)rightMargin.Value });
+            }
+            if (horizontalPosition.HasValue)
+            {
+                result.AddRange(SpecifyHorizontalPosition);
+                result.AddRange(new byte[] { (byte)horizontalPosition.Value });
+            }
+            if (verticalPosition.HasValue)
+            {
+                result.AddRange(SpecifyVerticalPosition);
+                result.AddRange(new byte[] { (byte)verticalPosition.Value });
+            }
 
             foreach (var command in wrappedCommands)
             {
-                sb.Append(command);
+                result.AddRange(command);
             }
 
-            if (cutPaper) sb.Append(Cut);
-            sb.Append(FormFeed);
+            if (cutPaper) result.AddRange(Cut);
+            result.AddRange(FormFeed);
 
-            string result = sb.ToString();
-            _logger.LogInformation($"Final print command: {EscapeNonPrintable(result)}");
-            return result;
+            _logger.LogInformation($"Final print command: {EscapeNonPrintable(result.ToArray())}");
+            return result.ToArray();
         }
 
         /// <summary>
@@ -223,18 +255,18 @@ namespace EscpPrinterWrapperLib
         /// </summary>
         /// <param name="input">The input string.</param>
         /// <returns>The escaped string.</returns>
-        private string EscapeNonPrintable(string input)
+        private string EscapeNonPrintable(byte[] input)
         {
             var sb = new StringBuilder();
             foreach (var c in input)
             {
-                if (char.IsControl(c))
+                if (c < 32 || c > 126)
                 {
-                    sb.Append($"\\u{((int)c):x4}");
+                    sb.Append($"\\x{c:x2}");
                 }
                 else
                 {
-                    sb.Append(c);
+                    sb.Append((char)c);
                 }
             }
             return sb.ToString();

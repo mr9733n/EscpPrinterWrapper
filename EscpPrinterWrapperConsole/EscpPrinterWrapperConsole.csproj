@@ -6,7 +6,8 @@
 		<Company>9733</Company>
 		<Authors>Dima Green</Authors>
 		<AssemblyTitle>EscpPrinterWrapperConsole</AssemblyTitle>
-		<Version>1.0.3</Version>
+		<Version>1.0.4</Version>
+		<Copyright>(c) 2024 9733</Copyright>
 		<Description>Console Application for ESC/P Printer Wrapper</Description>
 	</PropertyGroup>
 

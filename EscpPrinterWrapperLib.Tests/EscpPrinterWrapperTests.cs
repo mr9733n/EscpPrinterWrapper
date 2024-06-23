@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 using EscpPrinterWrapperLib;
 using EscpPrinterWrapperLib.Enums;
@@ -7,18 +8,18 @@ namespace EscpPrinterWrapperLib.Tests
 {
     public class EscpPrinterWrapperTests
     {
-        private string EscapeNonPrintable(string input)
+        private string EscapeNonPrintable(byte[] input)
         {
             var sb = new System.Text.StringBuilder();
             foreach (var c in input)
             {
-                if (char.IsControl(c))
+                if (c < 32 || c > 126)
                 {
-                    sb.Append($"\\u{((int)c):x4}");
+                    sb.Append($"\\x{c:x2}");
                 }
                 else
                 {
-                    sb.Append(c);
+                    sb.Append((char)c);
                 }
             }
             return sb.ToString();
@@ -28,47 +29,47 @@ namespace EscpPrinterWrapperLib.Tests
         public void WrapText_ShouldReturnCorrectEscpCommand()
         {
             var wrapper = new EscpPrinterWrapper(null);
-            string result = wrapper.WrapText("Hello", "World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide);
-            string expected = EscapeNonPrintable("\u001bSOH\u001bX24\u001bk\u0003\u001bE\u001b5\u001b-1\u001ba1\u001b 1Hello\u0009World");
-            Assert.Equal(expected, EscapeNonPrintable(result));
+            byte[] result = wrapper.WrapText("Hello", "World", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, true);
+            byte[] expected = { 0x1B, (byte)'S', (byte)'O', (byte)'H', 0x1B, (byte)'X', 0x32, 0x34, 0x1B, (byte)'k', 0x03, 0x1B, (byte)'E', 0x1B, 0x35, 0x1B, 0x2D, 0x31, 0x1B, 0x61, 0x31, 0x1B, 0x20, 0x31, (byte)'H', (byte)'e', (byte)'l', (byte)'l', (byte)'o', 0x09, (byte)'W', (byte)'o', (byte)'r', (byte)'l', (byte)'d', 0x0D };
+            Assert.Equal(EscapeNonPrintable(expected), EscapeNonPrintable(result));
         }
 
         [Fact]
         public void WrapBarcode_ShouldReturnCorrectEscpCommand()
         {
             var wrapper = new EscpPrinterWrapper(null);
-            string result = wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center);
-            string expected = EscapeNonPrintable("\u001bia\u001br1\u001bh70\u001bw2\u001bz2\u001ba1B123456789\\\\");
-            Assert.Equal(expected, EscapeNonPrintable(result));
+            byte[] result = wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, true);
+            byte[] expected = { 0x1B, (byte)'i', (byte)'a', 0x1B, (byte)'h', 0x37, 0x30, 0x1B, (byte)'w', 0x32, 0x1B, (byte)'z', 0x32, 0x1B, (byte)'r', 0x31, 0x1B, (byte)'a', 0x31, (byte)'B', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7', (byte)'8', (byte)'9', 0x5C, 0x5C, 0x0D };
+            Assert.Equal(EscapeNonPrintable(expected), EscapeNonPrintable(result));
         }
 
         [Fact]
         public void GeneratePrintCommand_ShouldReturnCorrectCommand()
         {
             var wrapper = new EscpPrinterWrapper(null);
-            var commands = new System.Collections.Generic.List<string>
+            var commands = new List<byte[]>
             {
-                wrapper.WrapText("Test1", "Test2", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
-                wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center)
+                wrapper.WrapText("Test1", "Test2", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, true),
+                wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, true)
             };
-            string result = wrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
-            string expected = EscapeNonPrintable("\u001b@\u001biL\u001bSOH\u001bX24\u001bk\u0003\u001bE\u001b5\u001b-1\u001ba1\u001b 1Test1\u0009Test2\u001bia\u001br1\u001bh70\u001bw2\u001bz2\u001ba1B123456789\\\\\u001biC\u000c");
-            Assert.Equal(expected, EscapeNonPrintable(result));
+            byte[] result = wrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
+            byte[] expected = { 0x1B, (byte)'@', 0x1B, 0x69, 0x4C, 0x1B, (byte)'S', (byte)'O', (byte)'H', 0x1B, (byte)'X', 0x32, 0x34, 0x1B, (byte)'k', 0x03, 0x1B, (byte)'E', 0x1B, 0x35, 0x1B, 0x2D, 0x31, 0x1B, 0x61, 0x31, 0x1B, 0x20, 0x31, (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'1', 0x09, (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'2', 0x0D, 0x1B, (byte)'i', (byte)'a', 0x1B, (byte)'h', 0x37, 0x30, 0x1B, (byte)'w', 0x32, 0x1B, (byte)'z', 0x32, 0x1B, (byte)'r', 0x31, 0x1B, (byte)'a', 0x31, (byte)'B', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7', (byte)'8', (byte)'9', 0x5C, 0x5C, 0x0D, 0x1B, 0x69, 0x43, 0x0C };
+            Assert.Equal(EscapeNonPrintable(expected), EscapeNonPrintable(result));
         }
 
         [Fact]
         public void GeneratePrintCommand_ShouldHandleMultipleTextCommands()
         {
             var wrapper = new EscpPrinterWrapper(null);
-            var commands = new System.Collections.Generic.List<string>
+            var commands = new List<byte[]>
             {
-                wrapper.WrapText("Text1", "Part1", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
-                wrapper.WrapText("Text2", "Part2", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide),
-                wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center)
+                wrapper.WrapText("Text1", "Part1", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, true),
+                wrapper.WrapText("Text2", "Part2", 24, FontType.Helsinki, Bold.On, Italic.Off, Underline.Single, Alignment.Center, Spacing.Wide, true),
+                wrapper.WrapBarcode("123456789", BarcodeType.CODE128, 70, BarcodeWidth.Medium, BarcodeRatio.TwoToOne, true, Alignment.Center, true)
             };
-            string result = wrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
-            string expected = EscapeNonPrintable("\u001b@\u001biL\u001bSOH\u001bX24\u001bk\u0003\u001bE\u001b5\u001b-1\u001ba1\u001b 1Text1\u0009Part1\u001bSOH\u001bX24\u001bk\u0003\u001bE\u001b5\u001b-1\u001ba1\u001b 1Text2\u0009Part2\u001bia\u001br1\u001bh70\u001bw2\u001bz2\u001ba1B123456789\\\\\u001biC\u000c");
-            Assert.Equal(expected, EscapeNonPrintable(result));
+            byte[] result = wrapper.GeneratePrintCommand(commands, cutPaper: true, landscapeOrientation: true);
+            byte[] expected = { 0x1B, (byte)'@', 0x1B, 0x69, 0x4C, 0x1B, (byte)'S', (byte)'O', (byte)'H', 0x1B, (byte)'X', 0x32, 0x34, 0x1B, (byte)'k', 0x03, 0x1B, (byte)'E', 0x1B, 0x35, 0x1B, 0x2D, 0x31, 0x1B, 0x61, 0x31, 0x1B, 0x20, 0x31, (byte)'T', (byte)'e', (byte)'x', (byte)'t', (byte)'1', 0x09, (byte)'P', (byte)'a', (byte)'r', (byte)'t', (byte)'1', 0x0D, 0x1B, (byte)'S', (byte)'O', (byte)'H', 0x1B, (byte)'X', 0x32, 0x34, 0x1B, (byte)'k', 0x03, 0x1B, (byte)'E', 0x1B, 0x35, 0x1B, 0x2D, 0x31, 0x1B, 0x61, 0x31, 0x1B, 0x20, 0x31, (byte)'T', (byte)'e', (byte)'x', (byte)'t', (byte)'2', 0x09, (byte)'P', (byte)'a', (byte)'r', (byte)'t', (byte)'2', 0x0D, 0x1B, (byte)'i', (byte)'a', 0x1B, (byte)'h', 0x37, 0x30, 0x1B, (byte)'w', 0x32, 0x1B, (byte)'z', 0x32, 0x1B, (byte)'r', 0x31, 0x1B, (byte)'a', 0x31, (byte)'B', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7', (byte)'8', (byte)'9', 0x5C, 0x5C, 0x0D, 0x1B, 0x69, 0x43, 0x0C };
+            Assert.Equal(EscapeNonPrintable(expected), EscapeNonPrintable(result));
         }
     }
 }

@@ -80,15 +80,15 @@ Running the Application
 
 ## Options
 
-	•	--cutPaper: Adds a cut paper command to the end of the print command.
-	•	--landscape: Sets the orientation to landscape.
-	•	--pageFormatWidth <value>: Specifies the page format width.
-	•	--pageFormatHeight <value>: Specifies the page format height.
-	•	--pageLength <value>: Specifies the page length.
-	•	--leftMargin <value>: Specifies the left margin.
-	•	--rightMargin <value>: Specifies the right margin.
-	•	--horizontalPosition <value>: Specifies the horizontal position.
-	•	--verticalPosition <value>: Specifies the vertical position.
+--cutPaper: Adds a cut paper command to the end of the print command.
+--landscape: Sets the orientation to landscape.
+--pageFormatWidth <value>: Specifies the page format width.
+--pageFormatHeight <value>: Specifies the page format height.
+--pageLength <value>: Specifies the page length.
+--leftMargin <value>: Specifies the left margin.
+--rightMargin <value>: Specifies the right margin.
+--horizontalPosition <value>: Specifies the horizontal position.
+--verticalPosition <value>: Specifies the vertical position.
 
 ## Contributing
 
